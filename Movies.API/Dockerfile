@@ -12,7 +12,7 @@ COPY . ./
 RUN dotnet publish -c Release -o out
 
 # Stage 2: Build runtime image
-FROM mcr.microsoft.com/dotnet/aspnet:5.0 AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
 
 # Copy the published output from the build stage
