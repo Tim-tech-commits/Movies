@@ -1,25 +1,25 @@
 #See https://aka.ms/customizecontainer to learn how to customize your debug container and how Visual Studio uses this Dockerfile to build your images for faster debugging.
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
-USER app
 WORKDIR /app
-EXPOSE 8080
-EXPOSE 8081
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-ARG BUILD_CONFIGURATION=Release
-WORKDIR /src
-COPY ["Movies.API/Movies.API.csproj", "Movies.API/"]
-RUN dotnet restore "./Movies.API/Movies.API.csproj"
-COPY . .
-WORKDIR "/src/Movies.API"
-RUN dotnet build "./Movies.API.csproj" -c $BUILD_CONFIGURATION -o /app/build
+# Copy csproj and restore as distinct layers
+COPY *.csproj ./
+RUN dotnet restore
 
-FROM build AS publish
-ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./Movies.API.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+# Copy the remaining files and build the application
+COPY . ./
+RUN dotnet publish -c Release -o out
 
-FROM base AS final
+# Stage 2: Build runtime image
+FROM mcr.microsoft.com/dotnet/aspnet:5.0 AS runtime
 WORKDIR /app
-COPY --from=publish /app/publish .
+
+# Copy the published output from the build stage
+COPY --from=build /app/out ./
+
+# Expose port 80 for the ASP.NET Core application
+EXPOSE 80
+
+# Define the entry point for the application
 ENTRYPOINT ["dotnet", "Movies.API.dll"]
