@@ -1,4 +1,4 @@
-﻿namespace Movies.Core
+﻿namespace Movies.Core.Models
 {
     public class Movie
     {
@@ -16,8 +16,8 @@
 
         public Movie()
         {
-            Genre = [];
-            Actors = [];
+            Genre = new();
+            Actors = new();
             Title = string.Empty;
             Director = string.Empty;
         }
