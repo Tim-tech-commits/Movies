@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Movies.Core.Models;
 
 namespace Movies.BLL.Abstract
 {
-    internal interface IMoviesService
+    public interface IMoviesService
     {
+        Task<List<Movie>> GetMovies(string genre = "", string title ="");
     }
 }

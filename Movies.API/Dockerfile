@@ -1,25 +1,26 @@
 #See https://aka.ms/customizecontainer to learn how to customize your debug container and how Visual Studio uses this Dockerfile to build your images for faster debugging.
 
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
-USER app
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build-env
 WORKDIR /app
-EXPOSE 8080
-EXPOSE 8081
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-ARG BUILD_CONFIGURATION=Release
-WORKDIR /src
-COPY ["Movies.API/Movies.API.csproj", "Movies.API/"]
-RUN dotnet restore "./Movies.API/Movies.API.csproj"
-COPY . .
-WORKDIR "/src/Movies.API"
-RUN dotnet build "./Movies.API.csproj" -c $BUILD_CONFIGURATION -o /app/build
+# Copy csproj and restore 
+COPY *.csproj ./
+RUN dotnet restore
+RUN ls -la /app/out && bash
+# Copy the remaining files and build the application
+COPY . ./
+RUN dotnet publish -c Release -o out
 
-FROM build AS publish
-ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./Movies.API.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
-
-FROM base AS final
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app
-COPY --from=publish /app/publish .
+
+# Copy the published output from the build stage
+COPY --from=build-env /app/out .
+
+# Copy the JSON data file from the Data folder into the image
+COPY Data/Movies.json ./Data/
+
+EXPOSE 80
+
 ENTRYPOINT ["dotnet", "Movies.API.dll"]
+
